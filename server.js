@@ -1,74 +1,97 @@
-// express import
+// express framework
 const express = require("express");
 
-// sql server library
+// microsoft sql driver
 const sql = require("mssql");
 
-// cors allow mobile request
+// cors allow mobile requests
 const cors = require("cors");
 
+// create app
 const app = express();
 
+// middleware
 app.use(express.json());
 app.use(cors());
 
 
-// database configuration
+// DATABASE CONFIGURATION
 const config = {
- user: "sa", // database username
- password: "123456", // database password
- server: "YOUR_SERVER_IP", // sql server ip
- database: "login_app",
- options:{
-  encrypt:false,
-  trustServerCertificate:true
- }
+
+    server: "localhost\\SQLEXPRESS", // your sql server
+
+    database: "login_app", // your database name
+
+    options: {
+        trustServerCertificate: true
+    }
+
 };
 
 
-// LOGIN API
-app.post("/login", async (req,res)=>{
+// ROOT ROUTE (for testing server)
+app.get("/", (req, res) => {
 
- try{
-
-  const {username,password}=req.body;
-
-  await sql.connect(config);
-
-  const result = await sql.query`
-  SELECT * FROM users
-  WHERE username=${username}
-  AND password=${password}
-  `;
-
-  if(result.recordset.length>0){
-
-   res.json({
-    status:true,
-    message:"Login success"
-   });
-
-  }else{
-
-   res.json({
-    status:false,
-    message:"Invalid login"
-   });
-
-  }
-
- }catch(err){
-
-  res.send(err);
-
- }
+    res.send("Backend server is running");
 
 });
 
 
-// server start
-app.listen(3000,()=>{
+// LOGIN API
+app.post("/login", async (req, res) => {
 
- console.log("Server running");
+    try {
+
+        // get data from request
+        const { username, password } = req.body;
+
+        // connect database
+        await sql.connect(config);
+
+        // sql query
+        const result = await sql.query`
+        SELECT * FROM users
+        WHERE username=${username}
+        AND password=${password}
+        `;
+
+        // check user exists
+        if (result.recordset.length > 0) {
+
+            res.json({
+                status: true,
+                message: "Login success"
+            });
+
+        } else {
+
+            res.json({
+                status: false,
+                message: "Invalid username or password"
+            });
+
+        }
+
+    } catch (error) {
+
+        console.log(error);
+
+        res.json({
+            status: false,
+            message: "Server error"
+        });
+
+    }
+
+});
+
+
+// SERVER PORT
+const PORT = process.env.PORT || 3000;
+
+// START SERVER
+app.listen(PORT, () => {
+
+    console.log(`Server running on port ${PORT}`);
 
 });
